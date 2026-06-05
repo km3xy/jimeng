@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 即梦提示词自动拆分工具</title>
+    <style>
+        :root {
+            --bg: #0f0f14;
+            --surface: #1a1a24;
+            --surface2: #22222f;
+            --border: #2a2a3a;
+            --text: #e0e0e8;
+            --text2: #a0a0b8;
+            --text3: #6a6a80;
+            --accent: #7c5cfc;
+            --accent-glow: rgba(124, 92, 252, 0.3);
+            --card-hua: #ff6b9d;
+            --card-hua-bg: rgba(255, 107, 157, 0.08);
+            --card-hua-border: rgba(255, 107, 157, 0.25);
+            --card-dong: #ff9f43;
+            --card-dong-bg: rgba(255, 159, 67, 0.08);
+            --card-dong-border: rgba(255, 159, 67, 0.25);
+            --card-jing: #54a0ff;
+            --card-jing-bg: rgba(84, 160, 255, 0.08);
+            --card-jing-border: rgba(84, 160, 255, 0.25);
+            --card-huan: #5fdd9d;
+            --card-huan-bg: rgba(95, 221, 157, 0.08);
+            --card-huan-border: rgba(95, 221, 157, 0.25);
+            --card-fen: #c56cf0;
+            --card-fen-bg: rgba(197, 108, 240, 0.08);
+            --card-fen-border: rgba(197, 108, 240, 0.25);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(124, 92, 252, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 60%, rgba(255, 107, 157, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(84, 160, 255, 0.04) 0%, transparent 50%);
+        }
+
+        /* ========== Header ========== */
+        .header {
+            text-align: center;
+            padding: 32px 20px 16px;
+            position: relative;
+        }
+        .header .logo {
+            font-size: 2.8em;
+            margin-bottom: 4px;
+            animation: float 3s ease-in-out infinite;
+            display: inline-block;
+        }
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+        .header h1 {
+            font-size: 1.6em;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: linear-gradient(135deg, #c9b8ff, #ffb8d4, #b8d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+        .header .subtitle {
+            font-size: 0.85em;
+            color: var(--text3);
+            letter-spacing: 0.04em;
+        }
+        .header .badge-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .badge {
+            font-size: 0.7em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+        .badge.dot::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+            position: relative;
+            top: -1px;
+        }
+        .badge.dot.green::before {
+            background: #5fdd9d;
+            box-shadow: 0 0 6px #5fdd9d;
+        }
+        .badge.dot.blue::before {
+            background: #54a0ff;
+            box-shadow: 0 0 6px #54a0ff;
+        }
+
+        /* ========== Container ========== */
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 0 16px 40px;
+        }
+
+        /* ========== Input Section ========== */
+        .input-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .input-section:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow), var(--shadow);
+        }
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            color: var(--text2);
+            letter-spacing: 0.03em;
+        }
+        .input-section label .icon {
+            margin-right: 4px;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        textarea {
+            flex: 1 1 100%;
+            min-height: 110px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            padding: 14px 16px;
+            font-size: 0.95em;
+            font-family: inherit;
+            resize: vertical;
+            line-height: 1.7;
+            transition: var(--transition);
+            letter-spacing: 0.02em;
+        }
+        textarea::placeholder {
+            color: var(--text3);
+            letter-spacing: 0.03em;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border-radius: var(--radius-xs);
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            letter-spacing: 0.03em;
+            transition: var(--transition);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn-primary:hover {
+            background: #8f74ff;
+            box-shadow: 0 6px 20px rgba(124, 92, 252, 0.45);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text2);
+        }
+        .btn-outline:hover {
+            border-color: var(--accent);
+            color: #fff;
+            background: rgba(124, 92, 252, 0.06);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text3);
+            padding: 8px 12px;
+            font-size: 0.78em;
+            border: 1px solid transparent;
+        }
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: var(--border);
+            background: var(--surface2);
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 0.78em;
+            border-radius: 20px;
+        }
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1em;
+        }
+        .btn-icon:hover {
+            border-color: var(--accent);
+            color: #fff;
+            background: rgba(124, 92, 252, 0.15);
+        }
+
+        /* ========== Results ========== */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.3em;
+            }
+            .header .logo {
+                font-size: 2.2em;
+            }
+            textarea {
+                min-height: 90px;
+                font-size: 0.88em;
+            }
+            button {
+                font-size: 0.82em;
+                padding: 9px 15px;
+            }
+        }
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+        }
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 3px 3px 0 0;
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+        .result-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            transform: translateY(-2px);
+        }
+        .result-card.card-hua {
+            border-left: 3px solid var(--card-hua);
+        }
+        .result-card.card-hua::before {
+            background: var(--card-hua);
+        }
+        .result-card.card-hua:hover {
+            border-color: var(--card-hua-border);
+            background: var(--card-hua-bg);
+        }
+        .result-card.card-dong {
+            border-left: 3px solid var(--card-dong);
+        }
+        .result-card.card-dong::before {
+            background: var(--card-dong);
+        }
+        .result-card.card-dong:hover {
+            border-color: var(--card-dong-border);
+            background: var(--card-dong-bg);
+        }
+        .result-card.card-jing {
+            border-left: 3px solid var(--card-jing);
+        }
+        .result-card.card-jing::before {
+            background: var(--card-jing);
+        }
+        .result-card.card-jing:hover {
+            border-color: var(--card-jing-border);
+            background: var(--card-jing-bg);
+        }
+        .result-card.card-huan {
+            border-left: 3px solid var(--card-huan);
+        }
+        .result-card.card-huan::before {
+            background: var(--card-huan);
+        }
+        .result-card.card-huan:hover {
+            border-color: var(--card-huan-border);
+            background: var(--card-huan-bg);
+        }
+        .result-card.card-fen {
+            border-left: 3px solid var(--card-fen);
+        }
+        .result-card.card-fen::before {
+            background: var(--card-fen);
+        }
+        .result-card.card-fen:hover {
+            border-color: var(--card-fen-border);
+            background: var(--card-fen-bg);
+        }
+        .result-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 0.9em;
+            letter-spacing: 0.03em;
+        }
+        .result-card .card-icon {
+            font-size: 1.3em;
+        }
+        .result-card .card-content {
+            color: var(--text2);
+            font-size: 0.85em;
+            line-height: 1.6;
+            min-height: 28px;
+            word-break: break-word;
+            letter-spacing: 0.02em;
+            transition: var(--transition);
+        }
+        .result-card .card-content.empty {
+            color: var(--text3);
+            font-style: italic;
+            font-size: 0.8em;
+        }
+        .result-card .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        .result-card .tag {
+            font-size: 0.7em;
+            padding: 3px 9px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--text3);
+            letter-spacing: 0.03em;
+            transition: var(--transition);
+        }
+        .result-card:hover .tag {
+            border-color: rgba(255, 255, 255, 0.15);
+            color: var(--text2);
+        }
+
+        /* ========== Structured Output ========== */
+        .structured-output {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        .structured-output h3 {
+            font-size: 0.9em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text2);
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .structured-output pre {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'PingFang SC', monospace;
+            font-size: 0.85em;
+            line-height: 1.8;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-word;
+            letter-spacing: 0.02em;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: var(--transition);
+        }
+        .structured-output .copy-btn-abs {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+        }
+        .copy-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 24px;
+            font-size: 0.85em;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        .copy-toast.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(4px);
+        }
+
+        /* ========== History ========== */
+        .history-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            box-shadow: var(--shadow);
+        }
+        .history-section h3 {
+            font-size: 0.9em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text2);
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+        }
+        .history-list {
+            list-style: none;
+            max-height: 260px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .history-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .history-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: var(--radius-xs);
+            background: var(--surface2);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.82em;
+            letter-spacing: 0.02em;
+        }
+        .history-item:hover {
+            border-color: var(--border);
+            background: rgba(124, 92, 252, 0.04);
+        }
+        .history-item .h-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text2);
+        }
+        .history-item .h-time {
+            font-size: 0.7em;
+            color: var(--text3);
+            white-space: nowrap;
+        }
+        .history-item .h-del {
+            opacity: 0;
+            transition: var(--transition);
+            cursor: pointer;
+            color: #ff6b6b;
+            font-size: 1em;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .history-item:hover .h-del {
+            opacity: 0.7;
+        }
+        .history-item .h-del:hover {
+            opacity: 1;
+            background: rgba(255, 107, 107, 0.15);
+        }
+        .empty-history {
+            text-align: center;
+            color: var(--text3);
+            padding: 20px;
+            font-size: 0.82em;
+            letter-spacing: 0.03em;
+        }
+
+        /* ========== Animations ========== */
+        @keyframes pulse-border {
+            0%,
+            100% {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 4px var(--accent-glow);
+            }
+            50% {
+                border-color: #a88dff;
+                box-shadow: 0 0 0 8px rgba(124, 92, 252, 0.1);
+            }
+        }
+        .highlight-pulse {
+            animation: pulse-border 0.6s ease-in-out 2;
+        }
+
+        /* ========== Responsive extras ========== */
+        @media (max-width: 400px) {
+            .btn-row {
+                flex-direction: column;
+            }
+            .btn-row button {
+                width: 100%;
+                justify-content: center;
+            }
+            .input-row {
+                flex-direction: column;
+            }
+            .results-grid {
+                gap: 8px;
+            }
+            .result-card {
+                padding: 12px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">🧠</div>
+        <h1>即梦提示词自动拆分工具</h1>
+        <p class="subtitle">输入一句提示词 · 智能拆分为五大维度 · 一键生成结构化输出</p>
+        <div class="badge-row">
+            <span class="badge dot green">本地运行</span>
+            <span class="badge dot blue">批量起号利器</span>
+            <span class="badge">🖼 画面</span>
+            <span class="badge">🎬 动作</span>
+            <span class="badge">📷 镜头</span>
+            <span class="badge">🌫 环境</span>
+            <span class="badge">🎭 氛围</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 输入区 -->
+        <div class="input-section" id="inputSection">
+            <label><span class="icon">📝</span>粘贴你的提示词</label>
+            <div class="input-row">
+                <textarea
+                id="promptInput"
+                placeholder="例如：一个身穿汉服的少女在樱花树下翩翩起舞，柔和的阳光透过花瓣洒落，4K超清，电影质感，梦幻唯美，浅景深，逆光拍摄，花瓣随风飘落，画面充满诗意..."
+            ></textarea>
+        </div>
+        <div class="btn-row">
+            <button class="btn-primary" onclick="analyzePrompt()" title="自动拆分提示词">
+                ⚡ 智能拆分
+            </button>
+            <button class="btn-outline" onclick="clearAll()" title="清空输入和结果">
+                🗑 清空
+            </button>
+            <button class="btn-outline" onclick="loadDemo()" title="加载示例提示词">
+                💡 示例
+            </button>
+            <button class="btn-outline" onclick="pasteFromClipboard()" title="从剪贴板粘贴">
+                📋 粘贴
+            </button>
+            <span style="flex:1;min-width:0;"></span>
+            <span style="font-size:0.7em;color:var(--text3);align-self:center;white-space:nowrap;">
+                已拆分 <strong id="analyzeCount" style="color:var(--accent);">0</strong> 次
+            </span>
+        </div>
+    </div>
+
+    <!-- 拆分结果卡片 -->
+    <div class="results-grid" id="resultsGrid">
+        <!-- 🖼 画面 -->
+        <div class="result-card card-hua" id="cardHua">
+            <div class="card-header"><span class="card-icon">🖼</span>画面</div>
+            <div class="card-content empty" id="contentHua">等待拆分...</div>
+            <div class="card-tags" id="tagsHua"></div>
+        </div>
+        <!-- 🎬 动作 -->
+        <div class="result-card card-dong" id="cardDong">
+            <div class="card-header"><span class="card-icon">🎬</span>动作</div>
+            <div class="card-content empty" id="contentDong">等待拆分...</div>
+            <div class="card-tags" id="tagsDong"></div>
+        </div>
+        <!-- 📷 镜头 -->
+        <div class="result-card card-jing" id="cardJing">
+            <div class="card-header"><span class="card-icon">📷</span>镜头</div>
+            <div class="card-content empty" id="contentJing">等待拆分...</div>
+            <div class="card-tags" id="tagsJing"></div>
+        </div>
+        <!-- 🌫 环境 -->
+        <div class="result-card card-huan" id="cardHuan">
+            <div class="card-header"><span class="card-icon">🌫</span>环境</div>
+            <div class="card-content empty" id="contentHuan">等待拆分...</div>
+            <div class="card-tags" id="tagsHuan"></div>
+        </div>
+        <!-- 🎭 氛围 -->
+        <div class="result-card card-fen" id="cardFen">
+            <div class="card-header"><span class="card-icon">🎭</span>氛围</div>
+            <div class="card-content empty" id="contentFen">等待拆分...</div>
+            <div class="card-tags" id="tagsFen"></div>
+        </div>
+    </div>
+
+    <!-- 结构化输出 -->
+    <div class="structured-output" id="structuredOutput" style="display:none;">
+        <h3>📋 结构化提示词 <button class="btn-icon copy-btn-abs" onclick="copyStructured()" title="一键复制">📋</button></h3>
+        <pre id="structuredPre"></pre>
+    </div>
+
+    <!-- 历史记录 -->
+    <div class="history-section">
+        <h3>
+            🕒 历史记录
+            <button class="btn-ghost btn-sm" onclick="clearHistory()" title="清除所有历史">清除全部</button>
+        </h3>
+        <ul class="history-list" id="historyList">
+            <li class="empty-history">暂无历史记录，拆分后自动保存</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="copy-toast" id="copyToast">✅ 已复制到剪贴板</div>
+
+<script>
+    (function() {
+        // ==================== 核心词库 ====================
+        // 画面关键词：主体、人物、物体、服饰、外貌、构图元素
+        const HUA_KEYWORDS = [
+            '少女', '少年', '女孩', '男孩', '女性', '男性', '人物', '主角', '模特', '角色',
+            '汉服', '和服', '旗袍', '长裙', '连衣裙', '西装', '铠甲', '古装', '现代装', '服饰', '衣着',
+            '长发', '短发', '卷发', '马尾', '发髻', '金发', '黑发', '银发', '眼眸', '瞳孔',
+            '微笑', '表情', '面容', '脸庞', '侧脸', '正脸', '回眸', '眼神',
+            '手持', '拿着', '佩戴', '戴着', '撑着', '背着',
+            '樱花', '玫瑰', '花朵', '花瓣', '花', '树叶', '树枝', '竹林', '草地',
+            '建筑', '宫殿', '城堡', '房屋', '桥梁', '拱门', '窗户', '栏杆', '台阶',
+            '月亮', '星辰', '星空', '云朵', '天空', '太阳', '落日', '朝阳', '彩虹',
+            '水面', '湖面', '海洋', '河流', '瀑布', '池塘', '倒影',
+            '动物', '猫', '狗', '鸟', '蝴蝶', '鹿', '马', '龙', '凤', '狐狸', '兔子',
+            '书', '剑', '扇子', '伞', '灯笼', '烛台', '乐器', '古琴', '笛子',
+            '丝绸', '薄纱', '绸缎', '蕾丝', '刺绣', '纹理', '褶皱',
+        ];
+
+        // 动作关键词：动态行为
+        const DONG_KEYWORDS = [
+            '翩翩起舞', '舞蹈', '跳舞', '旋转', '跳跃', '奔跑', '行走', '漫步', '踱步',
+            '飞翔', '飘落', '飘动', '飘扬', '飞舞', '飘荡', '摇曳', '摆动', '晃动',
+            '挥手', '回眸', '转身', '低头', '抬头', '仰望', '俯视', '凝视', '注视', '闭眼', '睁眼',
+            '拿起', '放下', '抛出', '撒', '扔', '捧起', '托起', '举起',
+            '坐下', '站立', '倚靠', '躺', '趴', '蹲', '跪',
+            '弹奏', '吹奏', '拉', '拨动', '敲击', '书写', '画',
+            '流动', '涌动', '翻滚', '激起', '溅起', '荡起', '泛起',
+            '走来', '走去', '穿过', '掠过', '滑过', '拂过', '吹过',
+            '展开', '绽放', '盛开', '闭合', '收缩', '舒展',
+            '追逐', '嬉戏', '玩耍', '拥抱', '牵手', '依偎',
+        ];
+
+        // 镜头关键词：摄影术语、机位、参数
+        const JING_KEYWORDS = [
+            '4K', '8K', '超清', '高清', 'HD', 'UHD', '分辨率',
+            '特写', '近景', '中景', '远景', '全景', '大远景', '广角', '长焦', '微距',
+            '浅景深', '深景深', '大光圈', '虚化', 'bokeh', '散景',
+            '逆光', '顺光', '侧光', '顶光', '底光', '柔光', '硬光',
+            '电影镜头', '电影感', '电影质感', 'cinematic', '胶片', '胶片感',
+            '俯拍', '仰拍', '平拍', '航拍', '第一人称', 'POV', '主观视角',
+            '慢动作', '升格', '延时', '定格', '高速摄影',
+            '广角镜头', '50mm', '85mm', '35mm', '24mm', '135mm', '200mm',
+            '光圈', '快门', 'ISO', '曝光', '对焦', '手动对焦',
+            '稳定器', '手持拍摄', '轨道', '摇臂', '跟拍', '推拉', '摇移',
+            '构图', '三分法', '对称构图', '引导线', '框架构图', '留白',
+            'RAW', 'LOG', '调色', '色彩分级', 'HDR',
+            '超广角', '鱼眼', '移轴', '针孔',
+        ];
+
+        // 环境关键词：场景、背景、时间、天气、光线
+        const HUAN_KEYWORDS = [
+            '室内', '室外', '户外', '房间', '大厅', '走廊', '庭院', '花园', '阳台',
+            '森林', '树林', '竹林', '花海', '草原', '沙漠', '雪地', '海滩', '山间', '山谷', '山顶',
+            '城市', '街道', '巷子', '广场', '集市', '车站', '码头',
+            '古风', '古建筑', '宫殿', '寺庙', '园林', '江南', '水乡',
+            '赛博朋克', '未来都市', '科幻', '太空', '星际', '废墟', '末日',
+            '白天', '夜晚', '黄昏', '黎明', '清晨', '傍晚', '午夜', '正午',
+            '晴天', '阴天', '雨天', '雪天', '雾天', '多云', '暴风雨',
+            '阳光', '月光', '星光', '灯光', '烛光', '霓虹灯', '荧光',
+            '春天', '夏天', '秋天', '冬天', '春季', '夏季', '秋季', '冬季',
+            '水面', '水下', '空中', '云端', '雾中', '烟中',
+            '影子', '投影', '光斑', '光晕', '光束', '丁达尔', '体积光',
+            '背景', '前景', '远景', '中景', '近景', '场景',
+            '自然光', '人造光', '暖光', '冷光', '环境光', '氛围光',
+        ];
+
+        // 氛围关键词：情绪、风格、质感、艺术效果
+        const FEN_KEYWORDS = [
+            '梦幻', '唯美', '浪漫', '诗意', '优雅', '温柔', '甜美', '清新',
+            '悲伤', '忧郁', '孤独', '寂寞', '凄凉', '哀愁', '沉重',
+            '神秘', '诡异', '恐怖', '阴暗', '黑暗', '惊悚',
+            '热血', '激昂', '霸气', '震撼', '壮观', '宏大', '磅礴',
+            '宁静', '安详', '平和', '静谧', '恬静', '幽静',
+            '温暖', '治愈', '柔和', '舒适', '惬意', '慵懒',
+            '冷清', '萧瑟', '荒凉', '苍茫', '空灵', '缥缈',
+            '复古', '怀旧', ' vintage', '年代感', '旧时光',
+            '赛博朋克', '蒸汽朋克', '哥特', '巴洛克', '洛可可', '极简', '禅意',
+            '油画质感', '水彩', '水墨', '素描', '插画', '漫画', '动画', 'CG',
+            '写实', '超写实', '照片级', ' photorealistic', '真实感',
+            '朦胧', '柔焦', '光晕', '辉光', ' glow', '发光',
+            '颗粒感', '胶片颗粒', '噪点', '纹理', '质感',
+            '高级感', '奢华', '精致', '细腻', '华丽', '质朴',
+            '仙气', '灵气', '清冷', '疏离', '温柔', '凌厉',
+            '史诗感', '故事感', '叙事感', '氛围感', '沉浸感',
+        ];
+
+        // 组合所有词库
+        const ALL_CATEGORIES = {
+            hua: { keywords: HUA_KEYWORDS, id: 'Hua', label: '画面', icon: '🖼', cssClass: 'card-hua' },
+            dong: { keywords: DONG_KEYWORDS, id: 'Dong', label: '动作', icon: '🎬', cssClass: 'card-dong' },
+            jing: { keywords: JING_KEYWORDS, id: 'Jing', label: '镜头', icon: '📷', cssClass: 'card-jing' },
+            huan: { keywords: HUAN_KEYWORDS, id: 'Huan', label: '环境', icon: '🌫', cssClass: 'card-huan' },
+            fen: { keywords: FEN_KEYWORDS, id: 'Fen', label: '氛围', icon: '🎭', cssClass: 'card-fen' },
+        };
+
+        // ==================== 分词工具 ====================
+        function tokenize(text) {
+            // 按标点、空格等分割，保留有意义的片段
+            const cleaned = text.replace(/[，,。.；;、！!？?：:（）()【】\[\]""'']/g, ' ');
+            // 进一步按空格分割
+            const rawTokens = cleaned.split(/\s+/).filter(t => t.length > 0);
+            // 对于中文，尝试按2-4字词组滑动窗口提取
+            const tokens = new Set();
+            for (const rt of rawTokens) {
+                tokens.add(rt);
+                if (rt.length >= 2) {
+                    for (let i = 0; i <= rt.length - 2; i++) {
+                        tokens.add(rt.substring(i, i + 2));
+                        if (rt.length >= 3 && i <= rt.length - 3) {
+                            tokens.add(rt.substring(i, i + 3));
+                        }
+                        if (rt.length >= 4 && i <= rt.length - 4) {
+                            tokens.add(rt.substring(i, i + 4));
+                        }
+                    }
+                }
+            }
+            return Array.from(tokens);
+        }
+
+        // ==================== 拆分算法 ====================
+        function analyzePromptText(text) {
+            if (!text || !text.trim()) {
+                return { hua: [], dong: [], jing: [], huan: [], fen: [], allTokens: [] };
+            }
+
+            const trimmed = text.trim();
+            const tokens = tokenize(trimmed);
+            const results = { hua: [], dong: [], jing: [], huan: [], fen: [], allTokens: tokens };
+
+            // 对每个token，检查它属于哪些类别
+            const assignedTokens = new Set(); // 记录已分配的长token
+
+            // 按token长度降序排列，优先匹配长词
+            const sortedTokens = [...tokens].sort((a, b) => b.length - a.length);
+
+            for (const token of sortedTokens) {
+                if (assignedTokens.has(token)) continue;
+                if (token.length < 2) continue;
+
+                let bestCategory = null;
+                let bestMatchLen = 0;
+
+                for (const [catKey, catData] of Object.entries(ALL_CATEGORIES)) {
+                    for (const kw of catData.keywords) {
+                        if (token.includes(kw) || kw.includes(token)) {
+                            const matchLen = Math.min(token.length, kw.length);
+                            if (matchLen > bestMatchLen) {
+                                bestMatchLen = matchLen;
+                                bestCategory = catKey;
+                            }
+                        }
+                    }
+                }
+
+                if (bestCategory && bestMatchLen >= 2) {
+                    if (!results[bestCategory].includes(token)) {
+                        results[bestCategory].push(token);
+                    }
+                    assignedTokens.add(token);
+                }
+            }
+
+            // 去重并整理
+            for (const key of ['hua', 'dong', 'jing', 'huan', 'fen']) {
+                // 去重
+                results[key] = [...new Set(results[key])];
+                // 排序：长词优先
+                results[key].sort((a, b) => b.length - a.length);
+                // 移除被更长词完全包含且更短的重复信息
+                const filtered = [];
+                for (const item of results[key]) {
+                    let isSubsumed = false;
+                    for (const other of results[key]) {
+                        if (other !== item && other.includes(item) && other.length > item.length) {
+                            isSubsumed = true;
+                            break;
+                        }
+                    }
+                    if (!isSubsumed) filtered.push(item);
+                }
+                results[key] = filtered.slice(0, 8); // 最多保留8个关键词
+            }
+
+            return results;
+        }
+
+        // ==================== 生成结构化提示词 ====================
+        function generateStructured(results, originalText) {
+            const sections = [];
+            const labels = {
+                hua: '🖼 画面',
+                dong: '🎬 动作',
+                jing: '📷 镜头',
+                huan: '🌫 环境',
+                fen: '🎭 氛围'
+            };
+
+            for (const [key, label] of Object.entries(labels)) {
+                const items = results[key] || [];
+                if (items.length > 0) {
+                    sections.push(`${label}：${items.join('、')}`);
+                } else {
+                    sections.push(`${label}：（未识别到相关内容）`);
+                }
+            }
+
+            const structured = [
+                `【原始提示词】`,
+                `${originalText.trim()}`,
+                ``,
+                `【结构化拆分】`,
+                ...sections,
+                ``,
+                `【重组提示词（可用于即梦生图）】`,
+                `${originalText.trim()}`,
+                ``,
+                `【优化建议】`,
+                `· 画面主体明确，可直接用于生成`,
+                `· 可根据需要补充镜头参数以获得更精准的构图`,
+                `· 氛围描述有助于AI理解画面情绪`,
+            ].join('\n');
+
+            return structured;
+        }
+
+        // ==================== UI 更新 ====================
+        function updateResultCards(results) {
+            const keys = ['hua', 'dong', 'jing', 'huan', 'fen'];
+            const contentIds = ['contentHua', 'contentDong', 'contentJing', 'contentHuan', 'contentFen'];
+            const tagIds = ['tagsHua', 'tagsDong', 'tagsJing', 'tagsHuan', 'tagsFen'];
+
+            for (let i = 0; i < keys.length; i++) {
+                const items = results[keys[i]] || [];
+                const contentEl = document.getElementById(contentIds[i]);
+                const tagsEl = document.getElementById(tagIds[i]);
+
+                if (items.length > 0) {
+                    contentEl.textContent = items.join(' · ');
+                    contentEl.classList.remove('empty');
+                } else {
+                    contentEl.textContent = '（未识别到相关内容，可手动补充）';
+                    contentEl.classList.add('empty');
+                }
+
+                // 生成标签
+                tagsEl.innerHTML = items.slice(0, 6).map(item =>
+                    `<span class="tag">${item}</span>`
+                ).join('');
+            }
+        }
+
+        function showStructuredOutput(structuredText) {
+            const section = document.getElementById('structuredOutput');
+            const pre = document.getElementById('structuredPre');
+            pre.textContent = structuredText;
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // ==================== 历史记录管理 ====================
+        function getHistory() {
+            try {
+                const raw = localStorage.getItem('jimeng_splitter_history');
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveHistory(originalText, results) {
+            const history = getHistory();
+            // 去重：如果已存在相同文本，先移除
+            const idx = history.findIndex(h => h.text === originalText.trim());
+            if (idx >= 0) history.splice(idx, 1);
+            history.unshift({
+                text: originalText.trim(),
+                results: results,
+                time: new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit',
+                    minute: '2-digit' }),
+                timestamp: Date.now(),
+            });
+            // 最多保留20条
+            const trimmed = history.slice(0, 20);
+            try {
+                localStorage.setItem('jimeng_splitter_history', JSON.stringify(trimmed));
+            } catch (e) {
+                // localStorage 满时清理旧记录
+                localStorage.setItem('jimeng_splitter_history', JSON.stringify(trimmed.slice(0, 10)));
+            }
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            const history = getHistory();
+            if (history.length === 0) {
+                list.innerHTML = '<li class="empty-history">暂无历史记录，拆分后自动保存</li>';
+                return;
+            }
+            list.innerHTML = history.map((h, i) => `
+            <li class="history-item" onclick="loadHistoryItem(${i})" title="点击加载此条记录">
+              <span style="font-size:0.9em;">📝</span>
+              <span class="h-text">${escapeHTML(h.text.substring(0, 50))}${h.text.length > 50 ? '...' : ''}</span>
+              <span class="h-time">${h.time}</span>
+              <span class="h-del" onclick="deleteHistoryItem(event, ${i})" title="删除">×</span>
+            </li>
+          `).join('');
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        window.loadHistoryItem = function(index) {
+            const history = getHistory();
+            if (index >= 0 && index < history.length) {
+                const item = history[index];
+                document.getElementById('promptInput').value = item.text;
+                // 直接恢复结果
+                updateResultCards(item.results);
+                const structured = generateStructured(item.results, item.text);
+                showStructuredOutput(structured);
+                // 高亮效果
+                const inputSection = document.getElementById('inputSection');
+                inputSection.classList.add('highlight-pulse');
+                setTimeout(() => inputSection.classList.remove('highlight-pulse'), 1200);
+                // 滚动到顶部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                updateAnalyzeCount();
+            }
+        };
+
+        window.deleteHistoryItem = function(event, index) {
+            event.stopPropagation();
+            const history = getHistory();
+            if (index >= 0 && index < history.length) {
+                history.splice(index, 1);
+                try {
+                    localStorage.setItem('jimeng_splitter_history', JSON.stringify(history));
+                } catch (e) {}
+                renderHistory();
+            }
+        };
+
+        function clearHistory() {
+            if (confirm('确定要清除所有历史记录吗？此操作不可恢复。')) {
+                localStorage.removeItem('jimeng_splitter_history');
+                renderHistory();
+                showToast('🗑 历史记录已清除');
+            }
+        }
+        window.clearHistory = clearHistory;
+
+        // ==================== Toast ====================
+        function showToast(msg) {
+            const toast = document.getElementById('copyToast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // ==================== 复制功能 ====================
+        function copyStructured() {
+            const pre = document.getElementById('structuredPre');
+            const text = pre.textContent;
+            if (!text || text.trim() === '') {
+                showToast('⚠️ 暂无内容可复制');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ 结构化提示词已复制！可直接粘贴到即梦使用');
+            }).catch(() => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try { document.execCommand('copy');
+                    showToast('✅ 已复制到剪贴板'); } catch (e) { showToast('⚠️ 复制失败，请手动选择'); }
+                document.body.removeChild(textarea);
+            });
+        }
+        window.copyStructured = copyStructured;
+
+        // ==================== 主流程 ====================
+        let analyzeCount = 0;
+
+        function updateAnalyzeCount() {
+            document.getElementById('analyzeCount').textContent = analyzeCount;
+            try {
+                localStorage.setItem('jimeng_splitter_count', analyzeCount);
+            } catch (e) {}
+        }
+
+        function analyzePrompt() {
+            const input = document.getElementById('promptInput');
+            const text = input.value.trim();
+            if (!text) {
+                showToast('⚠️ 请先输入或粘贴提示词');
+                input.focus();
+                return;
+            }
+
+            const results = analyzePromptText(text);
+            updateResultCards(results);
+
+            const structured = generateStructured(results, text);
+            showStructuredOutput(structured);
+
+            // 保存历史
+            saveHistory(text, results);
+
+            // 计数
+            analyzeCount++;
+            updateAnalyzeCount();
+
+            // 高亮动画
+            const grid = document.getElementById('resultsGrid');
+            grid.querySelectorAll('.result-card').forEach(card => {
+                card.style.transition = 'none';
+                card.style.boxShadow = '0 0 0 3px rgba(124,92,252,0.4)';
+                setTimeout(() => {
+                    card.style.transition = 'var(--transition)';
+                    card.style.boxShadow = '';
+                }, 50);
+            });
+
+            showToast('✨ 拆分完成！共识别 ' +
+                (results.hua.length + results.dong.length + results.jing.length + results.huan.length + results.fen
+                    .length) + ' 个关键词');
+        }
+        window.analyzePrompt = analyzePrompt;
+
+        function clearAll() {
+            document.getElementById('promptInput').value = '';
+            const emptyResults = { hua: [], dong: [], jing: [], huan: [], fen: [] };
+            updateResultCards(emptyResults);
+            document.getElementById('structuredOutput').style.display = 'none';
+            document.getElementById('structuredPre').textContent = '';
+            document.getElementById('promptInput').focus();
+            showToast('🗑 已清空');
+        }
+        window.clearAll = clearAll;
+
+        function loadDemo() {
+            const demos = [
+                '一个身穿汉服的少女在樱花树下翩翩起舞，柔和的阳光透过花瓣洒落，4K超清，电影质感，梦幻唯美，浅景深，逆光拍摄，花瓣随风飘落，画面充满诗意',
+                '赛博朋克城市的雨夜，霓虹灯闪烁，一个穿黑色风衣的独行者在巷子里快步行走，广角镜头，低角度仰拍，冷色调，画面充满孤独感和未来感',
+                '清晨的竹林里，阳光穿过薄雾形成丁达尔光束，一位白衣侠客静立其中，微风拂过衣袂飘飘，长焦镜头，浅景深，水墨画风格，空灵静谧',
+                '可爱的小猫趴在窗台上，午后暖阳洒在毛茸茸的身上，微距特写，大光圈虚化背景，温暖治愈，柔和光线，慵懒氛围',
+            ];
+            const randomDemo = demos[Math.floor(Math.random() * demos.length)];
+            document.getElementById('promptInput').value = randomDemo;
+            document.getElementById('promptInput').focus();
+            showToast('💡 已加载示例提示词，点击「智能拆分」开始');
+        }
+        window.loadDemo = loadDemo;
+
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text && text.trim()) {
+                    document.getElementById('promptInput').value = text.trim();
+                    showToast('📋 已从剪贴板粘贴');
+                    document.getElementById('promptInput').focus();
+                } else {
+                    showToast('⚠️ 剪贴板为空');
+                }
+            } catch (e) {
+                showToast('⚠️ 无法读取剪贴板，请手动粘贴（Ctrl+V）');
+            }
+        }
+        window.pasteFromClipboard = pasteFromClipboard;
+
+        // ==================== 键盘快捷键 ====================
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Enter 触发拆分
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                analyzePrompt();
+            }
+            // Ctrl+Shift+C 复制结构化结果
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+                const structuredSection = document.getElementById('structuredOutput');
+                if (structuredSection.style.display !== 'none') {
+                    e.preventDefault();
+                    copyStructured();
+                }
+            }
+        });
+
+        // ==================== 初始化 ====================
+        function init() {
+            // 恢复计数
+            try {
+                const savedCount = localStorage.getItem('jimeng_splitter_count');
+                if (savedCount !== null) analyzeCount = parseInt(savedCount) || 0;
+            } catch (e) {}
+            updateAnalyzeCount();
+            renderHistory();
+
+            // 自动聚焦
+            setTimeout(() => {
+                document.getElementById('promptInput').focus();
+            }, 300);
+
+            // 提示快捷键
+            console.log('🧠 即梦提示词自动拆分工具已就绪');
+            console.log('  ⌨ 快捷键：Ctrl+Enter 拆分 | Ctrl+Shift+C 复制结构化结果');
+            console.log('  💡 输入提示词后点击「智能拆分」或按 Ctrl+Enter');
+        }
+
+        init();
+    })();
+</script>
+</body>
+</html>
+
+
+
+“氛围词（静态氛围）”本质上就是：不描述动作，只负责“让画面有情绪、有感觉”的词。
+它介于“画面关键词”和“情绪表达”之间，但重点是——它不会推动时间变化，也不会让画面动起来。
+🧠 一句话理解
+👉 氛围词 = “这张画给人的感觉是什么”
+不是“发生了什么”，而是“看起来像什么情绪”
+🎭① 静态氛围词是什么类型？
+✔ 1. 情绪类（最核心）
+孤独感
+压抑感
+宿命感
+温柔感
+治愈感
+紧张感
+神秘感
+绝望感
+👉 这些都是“感觉”，不是动作
+✔ 2. 电影质感类
+电影级质感
+史诗感
+高级感
+超写实
+纪录片风格
+沉浸感
+👉 这是“视觉评价”，不是内容
+✔ 3. 时间/空间氛围（静态状态）
+寂静夜晚
+空旷街道
+无人城市
+末日废墟
+雨夜街头
+黄昏时分
+👉 注意：这里只描述“状态”，不是动作
+✔ 4. 色彩情绪（很重要）
+冷色调
+暖色调
+低饱和
+高对比
+蓝色忧郁调
+霓虹光污染
+⚠️② 为什么叫“静态氛围”？
+因为它满足三个条件👇
+❌ 不做这些事：
+不移动（不是动作）
+不拍摄（不是镜头）
+不变化过程（不是动态）
+✔ 只做一件事：
+定义画面“基调”
+🎬③ 对比一下就懂了
+🌧️ 示例
+🖼 画面关键词
+少女站在雨夜街头
+🎬 动作关键词
+缓慢低头
+回头
+📷 镜头
+镜头推进
+🌫 环境动态
+雨不断下
+风吹头发
+🎭 氛围词（静态氛围）
+孤独感
+压抑感
+电影级质感
+冷色调
+👉 这部分不会“发生变化”，只是“整体感觉”
+🧱④ 最简单记忆法
+👉 氛围词 = “滤镜 + 情绪 + 气场”
+你可以这样理解：
+画面 = 有什么东西
+动作 = 在做什么
+镜头 = 怎么拍
+环境 = 世界在动什么
+氛围 = 观众感受到什么
+🔥⑤ 举个完整例子（拆给你看）
+🌧️ 雨夜少女提示词
+Plain text
+雨夜城市街头，少女站在路灯下（画面）
+
+缓慢抬头，眼神微动（动作）
+
+镜头缓慢推进脸部特写（镜头）
+
+雨水持续落下，霓虹灯反光流动（环境）
+
+孤独感，压抑感，电影级冷色调（氛围）
+⚡⑥ 一句话总结
+👉 氛围词就是：
+“不告诉AI发生什么，只告诉AI应该让人感觉什么”
+如果你要，我可以帮你再升级👇
+🔥「氛围词1000条情绪词库（可直接用于起号）」
+🔥「爆款情绪模板（抖音播放量结构）」
+🔥「一键自动生成氛围词工具（升级你刚才那个工具）」
+
+
+
+这个问题很关键，本质是：AI提示词里“画面词”和“动态词”的分工要清楚，否则即梦会“只出图不动”或者“乱动”。
+我帮你用最简单的方式拆开👇
+🧠 一句话理解
+👉 图片关键词 = “长什么样”
+👉 动作关键词 = “怎么动起来”
+🧩① 图片关键词（静态描述）
+这些是“画面已经存在的状态”，不会推动时间变化。
+✔ 属于图片关键词的内容
+1️⃣ 人物外观
+年轻男子 / 少女
+古装侠客
+眼神冷峻 / 温柔
+长发 / 短发 / 红衣
+2️⃣ 场景环境
+雨夜街头
+竹林深处
+未来城市
+空旷房间
+夕阳海边
+3️⃣ 光影风格
+冷色调蓝光
+霓虹灯
+逆光剪影
+暖色夕阳
+高对比电影光
+4️⃣ 氛围词（静态氛围）
+孤独感
+压抑感
+宿命感
+治愈氛围
+电影级质感
+🎬② 动作关键词（让画面动）
+这些是“时间变化”，是视频的核心。
+✔ 属于动作关键词的内容
+1️⃣ 人物动作
+缓慢抬头
+低头沉默
+转身
+回头看
+走向远方
+拔剑 / 收剑
+轻微呼吸起伏
+2️⃣ 镜头动作（非常重要）
+镜头推进（zoom in）
+镜头拉远（zoom out）
+镜头环绕（orbit）
+横向移动（pan）
+轻微抖动（handheld）
+3️⃣ 环境动态（让世界动）
+雨持续下落
+风吹动头发
+衣服飘动
+霓虹灯闪烁
+烟雾流动
+光影变化
+⚠️③ 最容易混淆的点（重点）
+❌ 错误写法（混在一起）
+Plain text
+雨夜男子孤独走路缓慢低头风吹头发
+👉 问题：AI不知道重点是“画面”还是“动作”
+✅ 正确写法（分层结构）
+Plain text
+雨夜街头，年轻男子站立在空旷街道（图片关键词）
+
+缓慢低头，随后轻微向前走（动作关键词）
+
+镜头缓慢推进脸部特写（镜头运动）
+
+雨水持续落下，地面反光流动（环境动态）
+🧱④ 最清晰的分层公式（记住这个）
+👉 一句话万能结构：
+
+【画面是什么】 + 【人在做什么】 + 【镜头怎么拍】 + 【环境在动什么】
+🎯⑤ 实战对比（秒懂）
+🌧️ 示例1
+❌ 混乱版
+
+少女雨夜回头霓虹闪烁慢慢走
+✅ 专业版
+
+雨夜霓虹街头，少女站在路灯下（画面）
+
+缓慢回头，眼神轻微变化（动作）
+
+镜头从背后推进到侧脸特写（镜头）
+
+雨水不断落下，灯光反射流动（环境）
+🗡️ 示例2
+❌
+
+侠客拔剑风很大竹林动
+✅
+
+竹林深处古风侠客站立（画面）
+
+缓慢拔出长剑，动作逐渐加快（动作）
+
+镜头环绕人物旋转（镜头）
+
+竹叶被风卷起不断飘落（环境）
+🚀⑥ 最核心记忆法（超级重要）
+👉 图片关键词 = “摄影棚布景” 👉 动作关键词 = “演员表演” 👉 镜头 = “摄影师移动” 👉 环境 = “后期特效”
+⚡如果你下一步想升级，我可以帮你做：
+🔥「即梦提示词自动拆分工具（你丢一句话我帮你分层）」
+🔥「100条动作词库（专门做视频用）」
+🔥「爆款镜头语言大全（抖音级）」
+直接说：继续升级动作词库 / 镜头词库 / 起号模板 👍
+
+
+图生视频（Image to Video）提示词”，核心不是重新画画，而是告诉AI：画面怎么“动起来”。
+下面给你一套可以直接用的标准结构👇
+🎞 即梦视频提示词（图生视频 / Image to Video）
+🧩① 标准结构（核心公式）
+👉 画面主体 + 动作变化 + 镜头运动 + 环境动态 + 情绪氛围 + 风格
+🎬② 动态提示词重点（必须写）
+1️⃣ 主体动作（最关键）
+让画面“活起来”
+缓慢抬头 / 低头
+轻微呼吸起伏
+眼神移动 / 注视远方
+头发被风吹动
+走路 / 转身 / 回眸
+手部轻微动作（握紧 / 松开）
+2️⃣ 镜头运动（决定电影感）
+推近（zoom in）
+拉远（zoom out）
+左右平移（pan）
+环绕拍摄（orbit）
+轻微手持抖动（handheld）
+低角度仰拍 / 高角度俯拍
+3️⃣ 环境动态（提升真实感）
+雨水下落 / 雨夜街道反光
+风吹树叶 / 衣摆飘动
+霓虹灯闪烁
+烟雾缓慢流动
+光影变化（云层遮光）
+4️⃣ 情绪氛围（决定“故事感”）
+孤独、压抑
+紧张、悬疑
+温柔、治愈
+热血、燃
+伤感、离别感
+5️⃣ 风格关键词
+电影级质感
+超写实
+动漫风
+国风武侠
+赛博朋克
+低饱和冷色调 / 暖色夕阳
+🔥③ 可直接复制模板
+🎞 通用图生视频提示词模板
+
+[主体] + [动作变化] + [镜头运动] + [环境动态] + [光影] + [情绪] + [风格]
+
+画面缓慢动态变化，主体自然呼吸与轻微动作，镜头轻微推进或环绕拍摄，
+环境中存在自然运动元素（风、雨、光影、烟雾），整体具有电影质感。
+🎬④ 爆款示例（可直接用）
+🌧️ 1｜雨夜孤独男子
+
+年轻男子站在雨夜天台，缓慢低头沉默，头发被风吹动，
+镜头缓慢推进特写脸部，城市霓虹在背景闪烁，
+雨水持续落下，地面反光不断流动，
+整体氛围孤独压抑，电影级超写实风格
+🗡️ 2｜古风侠客拔剑
+
+古装侠客站在竹林中，缓慢拔出长剑，衣袍随风摆动，
+镜头环绕人物轻微旋转，竹叶飘落，
+光影穿过竹林形成斑驳变化，
+氛围紧张肃杀，国风武侠电影质感
+🌆 3｜赛博城市回眸
+
+未来城市街头少女缓缓回头，眼神微动，
+镜头从背后慢慢推近到侧脸，
+霓虹灯不断闪烁，雨水在空气中反射光线，
+整体赛博朋克风格，冷色调电影质感
+🌿 4｜治愈风微风少女
+
+少女站在草地上微笑，轻轻闭眼感受风，
+镜头缓慢横移，阳光穿过树叶形成光斑，
+花瓣随风飘动，画面轻微呼吸感，
+整体氛围温暖治愈，日系电影风格
+⚡一句话总结
+👉 图生视频提示词核心就是：
+“静态画面 + 轻微动作 + 镜头运动 + 环境变化 = 电影感视频”
+如果你要，我可以再帮你升级一版👇
+🔥「即梦爆款视频100条模板（带分镜+镜头+运镜+配音）」
+
+
+
+
+即梦图生视频爆款进阶模板（工业级）
+这套是专门给你做短视频批量起号用的：统一结构 + 可替换变量 + 高爆款情绪设计
+🧩① 工业级万能模板（直接套）
+Plain text
+[人物/主体] + [核心动作（渐变）] + [情绪变化]
+
+镜头：[推进/拉远/环绕/平移/抖动]
+画面：[环境动态元素：风/雨/光/烟/人群流动]
+
+光影：[冷暖/霓虹/逆光/夕阳/雨夜反光]
+氛围：[孤独/压抑/热血/宿命感/治愈/紧张]
+
+风格：[电影级超写实 / 国风 / 赛博朋克 / 动漫质感]
+
+要求：画面连续动态变化，动作自然流畅，具有电影运镜感
+🔥② 爆款“情绪引擎”（决定播放量）
+你做视频，一定要用情绪驱动👇
+💔 1｜孤独类（最容易爆）
+失落
+沉默
+迷茫
+站在世界尽头
+👉关键词：
+雨夜 / 空街 / 霓虹 / 背影 / 低头
+🔥 2｜爆发类（涨粉最快）
+回头爆发
+拔剑
+情绪反转
+怒意释放
+👉关键词：
+风起 / 衣袍炸开 / 镜头抖动 / 光爆
+💔 3｜宿命类（AI短剧王炸）
+命运对视
+最后一眼
+诀别
+重逢
+👉关键词：
+慢镜头 / 特写眼神 / 逆光 / 雨落
+🌸 4｜治愈类（适合小红书）
+微笑
+风吹花落
+阳光洒脸
+慢动作呼吸
+👉关键词：
+光斑 / 草地 / 微风 / 暖色调
+🎞③ 可复制“爆款视频提示词100%结构”
+🌧️ ① 雨夜孤独爆款
+Plain text
+年轻男子站在空旷雨夜街头，缓慢抬头望向远方，眼神迷茫
+
+镜头缓慢推进脸部特写，轻微手持抖动
+雨水不断落下，地面霓虹反光流动
+
+冷色调蓝光，城市灯光模糊闪烁
+氛围孤独压抑，电影级超写实风格
+🗡️ ② 古风爆款（必火）
+Plain text
+古装侠客站在风起竹林中，缓慢拔剑出鞘，眼神瞬间锐利
+
+镜头环绕人物旋转，轻微低角度仰拍
+竹叶被风卷起，光影穿过树林不断变化
+
+氛围紧张肃杀，国风电影质感
+🌆 ③ 赛博情绪爆款
+Plain text
+少女站在未来城市高架桥上，缓慢回头，眼神冷静
+
+镜头从背后推进到侧脸特写
+雨夜霓虹灯闪烁，光线在水面折射流动
+
+整体冷色调赛博朋克风格，电影级质感
+💔 ④ 宿命感爆款（最容易破百万）
+Plain text
+两人对视站在雨中，缓慢靠近又停下，情绪压抑
+
+镜头缓慢横移，聚焦眼神特写
+雨水不断落下形成虚化背景
+
+氛围宿命感强烈，时间仿佛静止
+电影级慢镜头风格
+⚡④ 批量起号核心技巧（重点）
+想做矩阵号，你要记住：
+1️⃣ 只换3个变量就行
+人物（男/女/古风/现代）
+场景（雨夜/竹林/城市/雪地）
+情绪（孤独/爆发/宿命）
+2️⃣ 爆款结构永远不变
+人物 + 动作变化 + 镜头推进 + 环境动态 + 情绪
+3️⃣ 视频爆点关键
+👉 一定要有：
+眼神变化
+镜头推进
+环境动态（风/雨/光）
+🚀如果你要继续升级，我可以帮你做：
+🔥①「即梦100条爆款图生视频脚本（可直接批量发抖音）」
+🔥②「AI短剧分镜模板（5秒一镜头）」
+🔥③「情绪配音词库（男声/女声/反派/崩溃）」
+🔥④「一键起号内容工厂流程」
+只要你说一句：继续升级哪一版 👍
+
+下面给你一套适合批量创作的 100条图生视频脚本模板库。为了方便复用，我按类型分类，每条都采用统一结构：
+【画面】+【动作】+【镜头】+【环境动态】+【氛围】
+你可以直接复制到即梦图生视频，也可以替换人物、场景、服装进行二次创作。
+🎬 第一类：古风武侠（1-20）
+1
+画面：竹林深处，白衣剑客独立
+动作：缓慢拔剑
+镜头：环绕推进
+环境：竹叶飘落
+氛围：肃杀、宿命感
+2
+古桥雨夜，红衣女侠撑伞
+缓慢回头
+镜头特写眼神
+雨滴落入河面
+离别感、伤感
+3
+雪山之巅，黑衣剑客迎风而立
+缓慢抬头
+镜头拉近面部
+雪花飞舞
+孤独英雄感
+4
+月下庭院，少年持剑练功
+挥剑转身
+镜头跟随移动
+树影摇曳
+热血成长
+5
+悬崖边，侠客俯瞰群山
+缓慢前行
+镜头由远及近
+云海翻涌
+史诗感
+6
+客栈门前，刀客推门而出
+停步回头
+镜头推进
+风吹衣摆
+大战将至
+7
+桃花林中，女剑仙漫步
+轻抚花瓣
+镜头平移
+花瓣飞舞
+唯美浪漫
+8
+荒漠古道，独行剑客牵马
+缓慢行走
+镜头低机位跟拍
+黄沙飞扬
+苍凉感
+9
+夜色城楼，锦衣少侠望月
+抬头凝视
+镜头推近
+灯笼摇晃
+思念感
+10
+竹楼前，少女舞剑
+旋转挥剑
+镜头环绕
+竹叶翻飞
+灵动感
+11-20（简洁版）
+雨巷侠女回眸｜推进镜头｜雨丝飘落｜神秘感
+雪夜拔刀｜镜头震动｜雪花飞舞｜决战感
+湖边剑客吹笛｜镜头平移｜水波荡漾｜孤独感
+山顶女侠持伞｜镜头拉远｜云层流动｜仙气感
+竹桥少年练剑｜环绕拍摄｜竹叶飞扬｜成长感
+古寺门前僧人转身｜推进特写｜香烟缭绕｜禅意
+红衣剑仙踏雪｜跟拍镜头｜雪尘扬起｜侠气
+夜雨客栈刀客饮酒｜镜头推近｜烛火摇曳｜苍凉
+桃林对决｜镜头快速切换｜花瓣漫天｜紧张感
+月下女剑仙回眸｜特写眼神｜轻风吹发｜宿命感
+🌆 第二类：都市情感（21-40）
+雨夜地铁站少女低头沉思
+天桥上男子望向车流
+霓虹街头情侣擦肩而过
+咖啡馆窗边女孩发呆
+深夜办公室加班青年
+街角路灯下独自等待
+机场候机厅挥手告别
+雨夜电话亭落泪
+海边长椅独坐
+车窗旁凝视远方
+黄昏天台吹风
+深夜便利店相遇
+雨中撑伞错过
+街头回头寻找身影
+地铁窗前发呆
+夜跑少女停下喘息
+图书馆偶遇对视
+雨后街头漫步
+海边奔跑
+夕阳下挥手告别
+氛围关键词可替换：
+孤独感
+失落感
+遗憾感
+治愈感
+重逢感
+🤣 第三类：搞笑反转（41-60）
+外卖员以为中大奖
+结果发现是广告单
+小伙霸气表白
+结果认错人
+老板训员工
+转头发现是董事长儿子
+网恋奔现
+发现是同桌
+神秘高手登场
+下一秒踩香蕉皮
+大侠拔剑
+结果拔出木棍
+富豪下车
+发现是共享汽车
+女神主动搭话
+原来问路
+保安拦住总裁
+总裁忘带门禁
+算命先生预测发财
+结果彩票少买一位数
+51-60继续采用： 铺垫→反转→特写表情→观众预期落空
+⚔️ 第四类：AI短剧（61-80）
+穿越古代成为县令
+重生回高考前一天
+被退婚后觉醒系统
+觉醒神级签到系统
+穿越修仙世界
+外卖小哥隐藏首富身份
+豪门弃少回归
+末世觉醒异能
+捡到未来手机
+被校花倒追
+神医下山
+龙王归来
+战神回归都市
+女帝重生
+天才少年复仇
+被家族逐出后崛起
+开局继承亿万资产
+我在古代开酒楼
+觉醒读心术
+被全网误会后逆袭
+✨ 第五类：神女仙侠（81-100）
+九天神女踏云而来
+凤凰神女浴火重生
+月宫仙子回眸
+神女立于星河之上
+冰雪女帝缓步而行
+花神降临人间
+龙族公主凝视远方
+青衣仙子吹笛
+神女于桃花海漫步
+星辰神女抬手施法
+红衣神女回首众生
+雪山神女祈福
+神女御剑飞行
+神女立于云端
+神女踏月而来
+神女唤醒凤凰
+神女与神龙对视
+神女守护苍生
+神女星空起舞
+神女转身微笑
+爆款公式（建议收藏）
+每条都可以套这个结构：
+Plain text
+主体人物
++
+核心动作（回头/抬头/拔剑/微笑）
++
+镜头推进
++
+风雨光影动态
++
+强情绪氛围
++
+电影级质感
+例如：
+Plain text
+红衣神女站在云海之巅，缓慢回头，眼神清冷。
+镜头由远及近推进至面部特写。
+云雾缓慢流动，金色阳光穿透云层。
+神圣感、宿命感、电影级超写实风格。
+这样一条图生视频脚本，可以衍生出几十个变体，用于持续更新短视频内容。
+
+
+
+在即梦提示词体系里，对白（台词）既不属于画面词，也不属于动作词，更不属于氛围词。
+它是一个独立分类：
+🎭 即梦提示词六大组成部分
+Plain text
+① 画面（主体）
+② 动作
+③ 镜头
+④ 环境动态
+⑤ 氛围
+⑥ 对白（台词）
+🖼 画面是什么
+描述看到什么。
+例如：
+Plain text
+雨夜街头
+年轻少女
+路灯下
+长发
+白色连衣裙
+🎬 动作是什么
+描述人物做什么。
+例如：
+Plain text
+缓慢回头
+抬头
+低头
+拔剑
+微笑
+奔跑
+📷 镜头是什么
+描述摄影机怎么拍。
+例如：
+Plain text
+镜头推进
+镜头拉远
+环绕拍摄
+特写
+跟拍
+🌫 环境动态是什么
+描述周围世界怎么动。
+例如：
+Plain text
+雨水落下
+树叶飘动
+烟雾流动
+霓虹闪烁
+花瓣飞舞
+🎭 氛围是什么
+描述观众感受到什么。
+例如：
+Plain text
+孤独感
+宿命感
+压抑感
+温暖感
+治愈感
+💬 对白是什么
+描述角色说什么。
+例如：
+Plain text
+“你终于来了。”
+Plain text
+“我等了你十年。”
+Plain text
+“这一次，我不会再输。”
+⚠️ 最容易搞混的地方
+例如：
+Plain text
+少女悲伤地说：
+你为什么离开我？
+拆分后：
+氛围
+Plain text
+悲伤感
+动作
+Plain text
+轻微低头
+对白
+Plain text
+你为什么离开我？
+🎬 完整示例
+Plain text
+【画面】
+雨夜街头，长发少女站在路灯下
+
+【动作】
+缓慢回头
+
+【镜头】
+镜头推进面部特写
+
+【环境动态】
+雨滴持续落下
+
+【氛围】
+孤独感、遗憾感
+
+【对白】
+“你为什么还是没有回来？”
+🔥 AI短剧里对白的作用
+对白主要承担：
+1. 推进剧情
+Plain text
+“师父死了。”
+2. 制造反转
+Plain text
+“其实我是亿万富翁。”
+3. 激发情绪
+Plain text
+“求你别离开我。”
+4. 制造爆点
+Plain text
+“从今天开始，你被开除了！”
+🚀 短视频爆款公式
+一个完整的即梦短剧提示词通常是：
+Plain text
+画面
++
+动作
++
+镜头
++
+环境动态
++
+氛围
++
+对白
+例如：
+Plain text
+雨夜天台，黑衣男子站在边缘。
+
+缓慢抬头。
+
+镜头推进至眼神特写。
+
+雨水不断落下。
+
+压抑感、绝望感。
+
+“如果能重来一次，我绝不会放手。”
+这时候：
+画面负责出图
+动作负责出视频
+镜头负责电影感
+环境负责真实感
+氛围负责情绪
+对白负责剧情和完播率
+对于AI漫剧、小说推文、短剧号来说，对白往往比画面更决定观众是否看完。
+
+
+在即梦、AI短剧、AI漫剧里：
+剧情（Story）≠ 对白（Dialogue）
+很多新手把剧情和对白混为一谈，其实它们是两个不同层级。
+🎬 什么是剧情？
+剧情就是：
+人物发生了什么事。
+或者更简单：
+故事的发展过程。
+例如：
+只有对白
+Plain text
+“你为什么骗我？”
+这不是剧情。
+因为观众不知道发生了什么。
+加上剧情
+Plain text
+少女发现未婚夫与闺蜜在一起。
+
+她冲进酒店房间。
+
+愤怒质问：
+
+“你为什么骗我？”
+这才是剧情。
+🧩 即梦短剧结构
+一般分七层：
+Plain text
+① 剧情
+② 画面
+③ 动作
+④ 镜头
+⑤ 环境动态
+⑥ 氛围
+⑦ 对白
+🔥 举例说明
+剧情
+Plain text
+女帝被叛徒围攻。
+
+身受重伤。
+
+逃入山林。
+画面
+Plain text
+雪夜森林
+
+红衣女帝
+
+满身血迹
+动作
+Plain text
+踉跄前行
+
+捂住伤口
+
+回头查看
+镜头
+Plain text
+跟拍
+
+推进
+
+眼神特写
+环境动态
+Plain text
+大雪纷飞
+
+寒风呼啸
+
+树枝摇晃
+氛围
+Plain text
+绝望感
+
+宿命感
+
+压迫感
+对白
+Plain text
+“我绝不会死在这里。”
+🎭 剧情的本质
+剧情回答的是：
+发生了什么？
+例如：
+Plain text
+被退婚
+为什么发生？
+例如：
+Plain text
+因为家族没落
+后来怎么样？
+例如：
+Plain text
+觉醒系统
+这三个部分连起来就是剧情。
+🚀 爆款短剧剧情公式
+最常见的抖音公式：
+Plain text
+冲突
++
+打脸
++
+逆袭
+例如：
+Plain text
+被退婚
+↓
+遭全城嘲笑
+↓
+觉醒神级系统
+↓
+身份曝光
+↓
+全场震惊
+📚 小说推文公式
+Plain text
+开局惨
+中间爽
+结尾留悬念
+例如：
+Plain text
+开局：
+外卖员被女友甩
+
+发展：
+意外继承百亿资产
+
+结尾：
+神秘老者出现
+
+“少爷，该回家继承家业了。”
+🎬 即梦提示词中的位置
+完整结构：
+Plain text
+【剧情】
+被退婚的少年独自来到山顶，
+准备结束生命，
+却意外获得上古传承。
+
+【画面】
+悬崖边，少年站在风中。
+
+【动作】
+缓慢抬头。
+
+【镜头】
+推进至眼神特写。
+
+【环境动态】
+云海翻涌，狂风吹动衣袍。
+
+【氛围】
+绝望感转为希望感。
+
+【对白】
+“原来，我才是真正的天命之子。”
+这里：
+剧情 = 故事
+画面 = 场景
+动作 = 表演
+镜头 = 摄影
+环境 = 特效
+氛围 = 情绪
+对白 = 台词
+最简单记忆法
+Plain text
+剧情 = 发生什么事
+画面 = 长什么样
+动作 = 怎么动
+镜头 = 怎么拍
+环境 = 周围怎么动
+氛围 = 什么感觉
+对白 = 说什么
+做AI漫剧、小说推文、真人短剧时，剧情是骨架，对白是血肉，画面和动作是外表。 没有剧情，再漂亮的画面也很难形成连续追更的短剧。
+
+
+
+
+
+
+
